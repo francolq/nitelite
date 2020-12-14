@@ -88,34 +88,3 @@
                     (sin (* (/ y delta) pi))
                 0))]))
 
-(osc-source "6543")
-; para mandar a si mismo:
-(osc-destination "osc.udp://localhost:6543")
-;(osc-send "/bpms" "i" (list 240))
-
-; valor inicial para osc-bpms.
-(define osc-bpms 120)
-
-; salto de 0 a 1 x veces por minuto:
-(define osc-beat
-    (case-lambda
-        [() (beat osc-bpms 0.25)]
-        [(delta) (beat osc-bpms delta)]))
-
-(spawn-task (lambda ()
-    (when (osc-msg "/bpms")
-        (set! osc-bpms (osc 0))))
-    'osc_update_bpms_task)
-
-;====================================
-
-(define (calesita n radio speed f)
-    (with-state (gcalesita n n radio speed f)))
-
-(define (gcalesita n m radio speed f) (cond ((> n 0)
-    (with-state    
-        (let ((x (* speed (time))))
-            (translate (vector (* radio (sin x)) 0 (* radio (cos x))))
-            (f)))
-    (rotate (vector 0 (/ 360.0 m) 0))
-    (gcalesita (- n 1) m radio speed f))))
