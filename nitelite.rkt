@@ -8,6 +8,7 @@
   ;(scale (rsndtouch vec1 0.2))
   (push)
   ;(translate (rsndtouch vec1 0.1))
+  (hint-cast-shadow)
   (draw-sphere)
   (pop)
   ;(rotate (vector 0 (* (sin (time)) 100) (* 50 (cos (time)))))
@@ -30,6 +31,20 @@
 
 (with-state
     (rotate (vector 90 0 0))
-    (scale 10)
+    (scale 50)
+    ;(colour (vector 255 0 0))
     (build-plane))
 
+
+;(light-diffuse 0 vec0)
+
+(define key (make-light 'spot 'free))
+(light-position key (vector 5 5 0))
+(light-diffuse key (vector 1 0.95 0.8))
+
+
+(shadow-light key)
+
+
+; FOG: VERY SLOW!
+;(fog (vector 0 0 1) 0.01 1 100)
