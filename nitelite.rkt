@@ -1,16 +1,18 @@
-; ANTES: cargar lib.rkt y paleta.rkt
+; ANTES: cargar lib.rkt, audio_in.rkt y paleta.rkt
 
 ; TODO:
-; - hacer obj invisible
-; - sacar culitos? (parecen pijas)
-; - usar musica
-; - mejorar baile (saltitos)
-; - arreglar tabulacion
+; - guardar posiciones en el estado
+; - juntar variables a controlar
 
-; nuevo:
+; HECHO:
+; - arreglada tabulacion
+; - mejor sombra
+; - los gusanitos se mueven, saltan y laten
+; - mejor baile: los gusanitos no atraviesan el piso
+; - usar musica
+; - obj escondido abajo
 ; - mejor codigo
 ; - mover camara
-; - poner culitos
 ; - usar BPMs
 ; - luces locas
 ; - usar paleta de colores
@@ -23,47 +25,11 @@
 (clear)
 (show-fps 1)
 (desired-fps 1000000)
-;(hint-wire)
-(scale (vmul vec1 0.1))
-
-
-(define (gusanito n m) (cond ((> n 0)
-  ;(colour (vector (gh 0) (gh 1) (gh 2)))
-  ;(colour (list-ref paleta (random 6)))
-  (colour (list-ref paleta (modulo (+ n m) 6)))
-  ;(scale (rsndtouch vec1 0.2))
-  (push)
-  ;(translate (rsndtouch vec1 0.1))
-  (hint-cast-shadow)
-  ;(cond ((= n 5)
-  ;    (push)
-  ;    (translate (vector 0.5 0 0))
-  ;    (draw-sphere)
-  ;    (translate (vector -1 0 0))
-  ;    (draw-sphere)
-  ;    (pop))
-  ;      (else
-  ;    (draw-sphere)))
-  (draw-sphere)
-  (pop)
-  ;(rotate (vector 0 (* (sin (time)) 100) (* 50 (cos (time)))))
-  (rotate (vector 0 (* (sintime (* 0.1 m)) 100) (* 50 (costime (* 0.1 m)))))
-  (translate (vector 0 1.3 0))
-  (gusanito (- n 1) m))))
-
-
-(define (gusanitos m v) (cond ((> m 0)
-  (push)
-  (translate (vmul (car v) 15))
-  (gusanito 6 m)
-  (pop)
-  (gusanitos (- m 1) (cdr v)))))
-
+(scale (vmul vec1 0.1))  ; escalado general
 
 ; LUCES
-; apagar luz principal
-(light-diffuse 0 vec0)
-(light-diffuse 0 (vec 0.2))
+;(light-diffuse 0 vec0)      ; apagar luz principal
+(light-diffuse 0 (vec 0.2))  ; atenuar luz principal
 (define key (make-light 'spot 'free))
 (light-position key (vector 5 5 0))
 (light-diffuse key (vector 1 0.95 0.8))
@@ -71,39 +37,71 @@
 
 
 ; CAMARA
+(reset-camera)
 (define obj (build-cube))
 (with-primitive obj
-    (scale (vec 11.5))
-    (translate (vector 0 -1 0)))
+  (rotate (vector -30 0 0))
+  (scale (vec 11.5))
+  (translate (vector 0 -1 0)))
 (lock-camera obj)
 (camera-lag 0.1)
-; camera angle
-;(clip 1 10000)  ; dinamico, ver abajo
 
 
-(define (animate x y)
-  ; pista de baile
-  ;(light-diffuse key (vector (sintime 1) (costime 1) 0.8))
-  (light-diffuse key (vec (beatsin bpms)))
+(define alto 6)
+(define cuantos 20)
+(gain 0.3)  ; nivel de manija
+(define (forma)
+  ;(hint-wire)
+  (draw-sphere))
+
+(define (camara)
+  (with-primitive obj
+    (rotate (vector 0 0.4 0.4))  ; rotacion
+    ;(rotate (vector (* (sin (* (time) 0.5)) 0.25) 0 0))  ; de arriba
+    (clip (+ (sin (* (time) 0.5)) 1.8) 10000)))  ; zoom
+
+(define (pista)
   (push)
-    (rotate (rtouch (vector 90 0 0) 1))
+    (rotate (rtouch (vector 90 0 0) 0.5))
     (scale 50)
-    ;(colour p3)
     (texture (load-texture "PALETA_COLAB_HEX.png"))
     (draw-plane)
-  (pop)
-    (gusanitos x y)
-    ; camara
-    (with-primitive obj
-        ;(identity)
-        (rotate (vector 0.1 1 0))
-        ; 10 segundos, maxima cercania 4
-        ;(clip (min (fmod (time) 10) 4) 10000)
-        (clip (+ (sin (time)) 2) 10000)
-        ;(translate (vector 10 31 10))
-        ;(rotate (vector (sintime 10) 0 (costime 10)))
-        ;(translate (vector (fmod (* (time) 10) 10) 3 0))
-))
+  (pop))
 
-(let* ((x 20) (y (grndvecs2 x)))
-    (every-frame (animate x y)))
+(define (gusanito n m) (cond ((> n 0)
+  ;(colour (vmul (list-ref paleta (modulo (+ n m) 6)) (gh (fmod m 4))))  ; con musica
+  (colour (list-ref paleta (modulo (+ n m) 6)))  ; sin musica
+  (scale (vadd vec1 (vmul (vec 0.005) (gh (fmod m 4)))))  ; latidos
+  (push)
+    (cond ((= n 6) (hint-cast-shadow)))  ; sombra en las patas
+    (cond ((or (= n 4) (= n 5))
+      (translate (vector (* 2.0 (- 0.5 (beatsin (* 0.5 bpms)))) 0 0))))  ; meneo
+    (forma)
+  (pop)
+  ; usar m para defasaje entre gusanitos
+  ; usar n para mayores angulos arriba
+  (rotate (vmul (vector 0 (* (sin (+ (* (time) (* 0.2 m)) m)) (* (- 7 n) 10))
+                          (* (cos (+ (* (time) (* 0.2 m)) m)) (* (- 7 n) 5)))
+                (logistic (- (gh 0) 1))))
+  (translate (vector 0 1.3 0))
+  (gusanito (- n 1) m))))
+
+(define (gusanitos m v) (cond ((> m 0)
+  (push)
+    (rotate (vector 0 (* (time) (* 2 m)) 0))  ; girar en la pista
+    (translate (vmul (car v) 15))  ; su lugar en la pista
+    (translate (vector 0 (* (beatsin bpms) (gh 0)) 0))  ; saltitos
+    ;(gusanito (+ 5 (modulo m 2)) m)  ; largo variable
+    (gusanito alto m)
+  (pop)
+  (gusanitos (- m 1) (cdr v)))))
+
+(define (animate x y)
+  ;(light-diffuse key (vec (beatsin bpms)))
+  (light-diffuse key (vec (* (gh 0) (beatsin bpms))))
+  (pista)
+  (gusanitos x y)
+  (camara))
+
+(let* ((x cuantos) (y (grndvecs2 x)))
+  (every-frame (animate x y)))
