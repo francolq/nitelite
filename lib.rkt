@@ -2,6 +2,11 @@
 (require scheme/math)
 (define 2pi (* 2 pi))
 
+; funcion logistica
+(define (logistic x)
+    (/ 1 (+ 1 (exp (- x)))))
+
+
 (define (sintime n)
     (sin (* n (time))))
 (define (costime n)
