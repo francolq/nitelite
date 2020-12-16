@@ -1,24 +1,4 @@
-; ANTES: cargar lib.rkt, audio_in.rkt y paleta.rkt
-
-; TODO:
-; - guardar posiciones en el estado
-; - juntar variables a controlar
-
-; HECHO:
-; - arreglada tabulacion
-; - mejor sombra
-; - los gusanitos se mueven, saltan y laten
-; - mejor baile: los gusanitos no atraviesan el piso
-; - usar musica
-; - obj escondido abajo
-; - mejor codigo
-; - mover camara
-; - usar BPMs
-; - luces locas
-; - usar paleta de colores
-; - mas guachxs, mejor ubicados
-; - descoordinacion
-
+; antes cargar lib.rkt, audio_in.rkt y paleta.rkt
 
 (define bpms 127)
 
